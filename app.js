@@ -1,11 +1,12 @@
-// ============================================================
-// JT SHIPPER - APP.JS
-// ============================================================
+/* =========================================================
+   JT SHIPPER - APP.JS
+   Supabase + Search + Add + Edit + Delete
+========================================================= */
 
 
-// ============================================================
-// SUPABASE CONFIG
-// ============================================================
+/* =========================================================
+   1. SUPABASE CONFIG
+========================================================= */
 
 const SUPABASE_URL =
   "https://fwamplkwgsxotcykqxhd.supabase.co";
@@ -14,162 +15,618 @@ const SUPABASE_ANON_KEY =
   "sb_publishable_l7M95el4HZhbXCj4rzq9pg_-1MoyZoQ";
 
 
-// ============================================================
-// INIT SUPABASE
-// ============================================================
+/* =========================================================
+   2. SUPABASE CLIENT
+========================================================= */
 
-if (!window.supabase) {
+let supabaseClient = null;
 
-  console.error(
-    "Không tìm thấy thư viện Supabase."
-  );
 
-  throw new Error(
-    "Supabase library chưa được tải."
+/*
+ * Khởi tạo Supabase
+ */
+function initSupabase() {
+
+  if (
+    !SUPABASE_URL ||
+    !SUPABASE_ANON_KEY
+  ) {
+
+    console.error(
+      "Thiếu SUPABASE_URL hoặc SUPABASE_ANON_KEY"
+    );
+
+    return false;
+  }
+
+
+  if (
+    !SUPABASE_URL.startsWith("http://") &&
+    !SUPABASE_URL.startsWith("https://")
+  ) {
+
+    console.error(
+      "SUPABASE_URL phải bắt đầu bằng http:// hoặc https://"
+    );
+
+    return false;
+  }
+
+
+  if (
+    typeof window.supabase === "undefined"
+  ) {
+
+    console.error(
+      "Chưa tải được thư viện Supabase."
+    );
+
+    return false;
+  }
+
+
+  try {
+
+    supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+    console.log(
+      "Supabase initialized."
+    );
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "Không thể khởi tạo Supabase:",
+      error
+    );
+
+    return false;
+  }
+
+}
+
+
+/* =========================================================
+   3. DOM
+========================================================= */
+
+let searchInput;
+let searchButton;
+let clearSearch;
+let results;
+let resultCount;
+
+let customerForm;
+let saveButton;
+
+
+/*
+ * Lấy DOM sau khi HTML đã load
+ */
+function initDOM() {
+
+  searchInput =
+    document.getElementById(
+      "searchInput"
+    );
+
+  searchButton =
+    document.getElementById(
+      "searchButton"
+    );
+
+  clearSearch =
+    document.getElementById(
+      "clearSearch"
+    );
+
+  results =
+    document.getElementById(
+      "results"
+    );
+
+  resultCount =
+    document.getElementById(
+      "resultCount"
+    );
+
+  customerForm =
+    document.getElementById(
+      "customerForm"
+    );
+
+  saveButton =
+    document.getElementById(
+      "saveButton"
+    );
+
+
+  console.log(
+    "DOM initialized."
   );
 
 }
 
 
-const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
+/* =========================================================
+   4. SAFE HTML
+========================================================= */
+
+/*
+ * Chống HTML injection khi đưa dữ liệu
+ * Supabase vào giao diện.
+ */
+
+function escapeHTML(value) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+
+    return "";
+
+  }
 
 
-console.log(
-  "✅ JT Shipper - Supabase connected"
-);
-
-
-// ============================================================
-// HELPER
-// ============================================================
-
-function $(id) {
-
-  return document.getElementById(id);
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 }
 
 
-function getValue(id) {
+/* =========================================================
+   5. FORMAT
+========================================================= */
+
+function normalizePhone(value) {
+
+  return String(value || "")
+    .replace(/\D/g, "")
+    .trim();
+
+}
+
+
+function formatDate(date) {
+
+  if (!date) {
+
+    return "";
+
+  }
+
+
+  try {
+
+    return new Date(date)
+      .toLocaleString(
+        "vi-VN",
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }
+      );
+
+  } catch {
+
+    return "";
+
+  }
+
+}
+
+
+/* =========================================================
+   6. MESSAGE
+========================================================= */
+
+function showMessage(
+  message,
+  type = "info"
+) {
+
+  if (type === "error") {
+
+    alert(
+      "❌ " + message
+    );
+
+  } else if (type === "success") {
+
+    alert(
+      "✅ " + message
+    );
+
+  } else {
+
+    alert(message);
+
+  }
+
+}
+
+
+/* =========================================================
+   7. LOADING
+========================================================= */
+
+function setSearchLoading(
+  loading
+) {
+
+  if (!searchButton) {
+
+    return;
+
+  }
+
+
+  searchButton.disabled =
+    loading;
+
+
+  if (loading) {
+
+    searchButton.innerHTML =
+      "⏳ ĐANG TÌM...";
+
+  } else {
+
+    searchButton.innerHTML =
+      "🔎 TRA CỨU";
+
+  }
+
+}
+
+
+function setSaveLoading(
+  loading
+) {
+
+  if (!saveButton) {
+
+    return;
+
+  }
+
+
+  saveButton.disabled =
+    loading;
+
+
+  if (loading) {
+
+    saveButton.innerHTML =
+      "⏳ ĐANG LƯU...";
+
+  } else {
+
+    saveButton.innerHTML =
+      "💾 LƯU THÔNG TIN";
+
+  }
+
+}
+
+
+/* =========================================================
+   8. GET FORM DATA
+========================================================= */
+
+function getFormValue(id) {
 
   const element =
-    $(id);
+    document.getElementById(id);
+
 
   if (!element) {
 
-    console.error(
-      `Không tìm thấy element #${id}`
+    console.warn(
+      "Không tìm thấy element:",
+      id
     );
 
     return "";
 
   }
 
+
   return element.value.trim();
 
 }
 
 
-function cleanPhone(phone) {
+/*
+ * Lấy toàn bộ dữ liệu từ form
+ */
 
-  return String(
-    phone || ""
-  ).replace(
-    /\D/g,
-    ""
-  );
+function getFormData() {
 
-}
-
-
-function escapeHTML(value) {
-
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
+  const phone =
+    normalizePhone(
+      getFormValue("phone")
     );
 
+
+  const data = {
+
+    phone: phone,
+
+    customer_name:
+      getFormValue(
+        "customer_name"
+      ),
+
+    shipper_name:
+      getFormValue(
+        "shipper_name"
+      ),
+
+    installer_name:
+      getFormValue(
+        "installer_name"
+      ),
+
+    hamlet:
+      getFormValue(
+        "hamlet"
+      ),
+
+    commune:
+      getFormValue(
+        "commune"
+      ),
+
+    address:
+      getFormValue(
+        "address"
+      ),
+
+    note:
+      getFormValue(
+        "note"
+      )
+
+  };
+
+
+  return data;
+
 }
 
 
-// ============================================================
-// ELEMENTS
-// ============================================================
+/* =========================================================
+   9. VALIDATE PHONE
+========================================================= */
 
-const searchInput =
-  $("searchInput");
+function validatePhone(phone) {
 
-const searchButton =
-  $("searchButton");
+  if (!phone) {
 
-const clearSearch =
-  $("clearSearch");
+    return {
+      valid: false,
+      message:
+        "Vui lòng nhập số điện thoại."
+    };
 
-const results =
-  $("results");
-
-const resultCount =
-  $("resultCount");
-
-const customerForm =
-  $("customerForm");
-
-const saveButton =
-  $("saveButton");
+  }
 
 
-// ============================================================
-// EMPTY
-// ============================================================
+  if (
+    phone.length < 2
+  ) {
 
-function showEmpty(
-  title,
-  description
-) {
+    return {
+      valid: false,
+      message:
+        "Số điện thoại phải có ít nhất 2 số."
+    };
 
-  if (!results) return;
+  }
+
+
+  if (
+    phone.length > 15
+  ) {
+
+    return {
+      valid: false,
+      message:
+        "Số điện thoại không hợp lệ."
+    };
+
+  }
+
+
+  return {
+    valid: true,
+    message: ""
+  };
+
+}
+
+
+/* =========================================================
+   10. SEARCH CUSTOMER
+========================================================= */
+
+async function searchCustomers() {
+
+  if (!supabaseClient) {
+
+    showMessage(
+      "Supabase chưa được khởi tạo.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const keyword =
+    normalizePhone(
+      searchInput
+        ? searchInput.value
+        : ""
+    );
+
+
+  if (!keyword) {
+
+    showMessage(
+      "Vui lòng nhập số điện thoại cần tra cứu.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (keyword.length < 2) {
+
+    showMessage(
+      "Bạn cần nhập ít nhất 2 số cuối.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  setSearchLoading(true);
+
+
+  renderLoading();
+
+
+  try {
+
+    /*
+     * Tìm theo:
+     *
+     * 0912345678
+     *
+     * hoặc:
+     *
+     * 78
+     * 678
+     * 5678
+     *
+     * vì dùng ilike %keyword
+     */
+
+    const {
+      data,
+      error
+    } = await supabaseClient
+
+      .from("customers")
+
+      .select("*")
+
+      .ilike(
+        "phone",
+        `%${keyword}%`
+      )
+
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+    if (error) {
+
+      console.error(
+        "Search error:",
+        error
+      );
+
+      renderError(
+        getSupabaseError(error)
+      );
+
+      return;
+
+    }
+
+
+    renderResults(
+      data || []
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Search exception:",
+      error
+    );
+
+    renderError(
+      error.message ||
+      "Có lỗi xảy ra khi tra cứu."
+    );
+
+
+  } finally {
+
+    setSearchLoading(false);
+
+  }
+
+}
+
+
+/* =========================================================
+   11. RENDER LOADING
+========================================================= */
+
+function renderLoading() {
+
+  if (!results) {
+
+    return;
+
+  }
 
 
   results.innerHTML = `
 
-    <div class="empty-state">
+    <div class="empty">
 
-      <div class="empty-icon">
-        🔍
+      <div
+        class="empty-icon"
+      >
+        ⏳
       </div>
 
-      <h3>
-        ${escapeHTML(title)}
-      </h3>
+      <strong>
+        Đang tra cứu...
+      </strong>
 
       <p>
-        ${escapeHTML(
-          description ||
-          "Nhập số điện thoại để bắt đầu tra cứu."
-        )}
+        Vui lòng chờ một chút.
       </p>
 
     </div>
@@ -180,76 +637,44 @@ function showEmpty(
   if (resultCount) {
 
     resultCount.textContent =
-      "0 kết quả";
+      "Đang tìm...";
 
   }
 
 }
 
 
-// ============================================================
-// LOADING
-// ============================================================
+/* =========================================================
+   12. RENDER ERROR
+========================================================= */
 
-function showLoading() {
+function renderError(
+  message
+) {
 
-  if (!results) return;
+  if (!results) {
 
+    return;
 
-  results.innerHTML = `
-
-    <div class="empty-state">
-
-      <div class="empty-icon">
-        ⏳
-      </div>
-
-      <h3>
-        Đang tìm kiếm...
-      </h3>
-
-      <p>
-        Đang kiểm tra dữ liệu.
-      </p>
-
-    </div>
-
-  `;
-
-}
-
-
-// ============================================================
-// ERROR
-// ============================================================
-
-function showError(error) {
-
-  console.error(
-    "JT ERROR:",
-    error
-  );
-
-
-  if (!results) return;
-
-
-  const message =
-    error?.message ||
-    "Có lỗi xảy ra.";
+  }
 
 
   results.innerHTML = `
 
-    <div class="empty-state">
+    <div class="empty">
 
-      <div class="empty-icon">
-        ⚠️
+      <div
+        class="empty-icon"
+        style="
+          background:#fff1f2;
+        "
+      >
+        ❌
       </div>
 
-      <h3>
-        Không thể thực hiện
-      </h3>
+      <strong>
+        Không thể tra cứu
+      </strong>
 
       <p>
         ${escapeHTML(message)}
@@ -270,178 +695,61 @@ function showError(error) {
 }
 
 
-// ============================================================
-// SEARCH
-// ============================================================
+/* =========================================================
+   13. RENDER RESULTS
+========================================================= */
 
-async function searchCustomers() {
+function renderResults(
+  customers
+) {
 
-  if (!searchInput) {
-
-    console.error(
-      "Không có searchInput"
-    );
+  if (!results) {
 
     return;
 
   }
 
 
-  const keyword =
-    cleanPhone(
-      searchInput.value
-    );
+  if (!Array.isArray(customers)) {
 
-
-  if (!keyword) {
-
-    showEmpty(
-      "Chưa nhập số điện thoại"
-    );
-
-    return;
+    customers = [];
 
   }
-
-
-  if (keyword.length < 2) {
-
-    showEmpty(
-      "Vui lòng nhập ít nhất 2 số",
-      "Bạn có thể nhập 2 - 4 số cuối hoặc full số điện thoại."
-    );
-
-    return;
-
-  }
-
-
-  if (searchButton) {
-
-    searchButton.disabled =
-      true;
-
-    searchButton.innerHTML =
-      "⏳ ĐANG TÌM...";
-
-  }
-
-
-  showLoading();
-
-
-  try {
-
-    let query =
-      supabaseClient
-        .from("customers")
-        .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-
-    // ========================================================
-    // FULL SỐ
-    // ========================================================
-
-    if (keyword.length >= 5) {
-
-      query =
-        query.eq(
-          "phone",
-          keyword
-        );
-
-    }
-
-
-    // ========================================================
-    // 2 - 4 SỐ CUỐI
-    // ========================================================
-
-    else {
-
-      query =
-        query.ilike(
-          "phone",
-          `%${keyword}`
-        );
-
-    }
-
-
-    const {
-      data,
-      error
-    } =
-      await query;
-
-
-    if (error) {
-
-      throw error;
-
-    }
-
-
-    renderResults(
-      data || []
-    );
-
-  }
-
-  catch (error) {
-
-    showError(
-      error
-    );
-
-  }
-
-  finally {
-
-    if (searchButton) {
-
-      searchButton.disabled =
-        false;
-
-      searchButton.innerHTML =
-        "🔎 TRA CỨU";
-
-    }
-
-  }
-
-}
-
-
-// ============================================================
-// RENDER
-// ============================================================
-
-function renderResults(data) {
-
-  if (!results) return;
 
 
   if (resultCount) {
 
     resultCount.textContent =
-      `${data.length} kết quả`;
+      `${customers.length} kết quả`;
 
   }
 
 
-  if (!data.length) {
+  if (
+    customers.length === 0
+  ) {
 
-    showEmpty(
-      "Không tìm thấy khách hàng",
-      "Không có dữ liệu phù hợp với số điện thoại này."
-    );
+    results.innerHTML = `
+
+      <div class="empty">
+
+        <div
+          class="empty-icon"
+        >
+          🔎
+        </div>
+
+        <strong>
+          Không tìm thấy khách hàng
+        </strong>
+
+        <p>
+          Chưa có thông tin với số điện thoại này.
+        </p>
+
+      </div>
+
+    `;
 
     return;
 
@@ -449,218 +757,329 @@ function renderResults(data) {
 
 
   results.innerHTML =
-    data
-      .map(
-        customer =>
-          createCustomerCard(
-            customer
-          )
-      )
+    customers
+      .map(createCustomerCard)
       .join("");
 
 }
 
 
-// ============================================================
-// CUSTOMER CARD
-// ============================================================
+/* =========================================================
+   14. CUSTOMER CARD
+========================================================= */
 
 function createCustomerCard(
   customer
 ) {
 
-  const address = [
+  const addressParts = [];
 
-    customer.address,
 
+  if (
+    customer.address
+  ) {
+
+    addressParts.push(
+      customer.address
+    );
+
+  }
+
+
+  if (
     customer.hamlet
-      ? `Ấp ${customer.hamlet}`
-      : "",
+  ) {
 
+    addressParts.push(
+      `Ấp ${customer.hamlet}`
+    );
+
+  }
+
+
+  if (
     customer.commune
-      ? `Xã ${customer.commune}`
-      : ""
+  ) {
 
-  ]
-    .filter(Boolean)
-    .join(", ");
+    addressParts.push(
+      `Xã ${customer.commune}`
+    );
+
+  }
+
+
+  const address =
+    addressParts
+      .filter(Boolean)
+      .join(", ");
 
 
   return `
 
-    <div
+    <article
       class="customer-card"
-      style="
-        background:#fff;
-        border:1px solid #e2e8f0;
-        border-radius:18px;
-        padding:20px;
-        margin-bottom:16px;
-        box-shadow:0 8px 25px rgba(15,23,42,.06);
-      "
     >
 
-      <!-- HEADER -->
+
+      <!-- =====================================
+           HEADER
+      ====================================== -->
 
       <div
         style="
-          display:flex;
-          justify-content:space-between;
-          align-items:flex-start;
-          gap:15px;
+          padding:20px;
+          border-bottom:
+            1px solid #f0f0f0;
         "
       >
 
-        <div>
+        <div
+          style="
+            display:flex;
+            justify-content:
+              space-between;
+            align-items:
+              flex-start;
+            gap:15px;
+          "
+        >
+
+          <div>
+
+            <div
+              style="
+                font-size:18px;
+                font-weight:900;
+                color:#18181b;
+              "
+            >
+
+              👤
+
+              ${
+                escapeHTML(
+                  customer.customer_name ||
+                  "Chưa có tên khách hàng"
+                )
+              }
+
+            </div>
+
+
+            <div
+              style="
+                margin-top:7px;
+                color:#e30613;
+                font-size:16px;
+                font-weight:900;
+              "
+            >
+
+              📱
+
+              ${
+                escapeHTML(
+                  customer.phone || ""
+                )
+              }
+
+            </div>
+
+          </div>
+
+
+          <div
+            style="
+              display:flex;
+              gap:6px;
+              flex-wrap:wrap;
+              justify-content:flex-end;
+            "
+          >
+
+            <button
+              type="button"
+              onclick="
+                editCustomer('${escapeHTML(
+                  customer.id
+                )}')
+              "
+              style="
+                border:0;
+                background:#f4f4f5;
+                color:#27272a;
+                padding:8px 10px;
+                border-radius:7px;
+                cursor:pointer;
+                font-size:11px;
+                font-weight:800;
+              "
+            >
+              ✏️ Sửa
+            </button>
+
+
+            <button
+              type="button"
+              onclick="
+                deleteCustomer('${escapeHTML(
+                  customer.id
+                )}')
+              "
+              style="
+                border:0;
+                background:#fff1f2;
+                color:#e30613;
+                padding:8px 10px;
+                border-radius:7px;
+                cursor:pointer;
+                font-size:11px;
+                font-weight:800;
+              "
+            >
+              🗑 Xóa
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =====================================
+           MAIN INFO
+      ====================================== -->
+
+      <div
+        style="
+          padding:18px;
+          display:grid;
+          grid-template-columns:
+            repeat(2,minmax(0,1fr));
+          gap:12px;
+        "
+      >
+
+
+        <!-- NGƯỜI CHẠY / LẮP -->
+
+        <div
+          style="
+            background:
+              linear-gradient(
+                135deg,
+                #fff1f2,
+                #ffffff
+              );
+            border:
+              1px solid #fecdd3;
+            border-left:
+              5px solid #e30613;
+            border-radius:12px;
+            padding:16px;
+            min-height:105px;
+          "
+        >
+
+          <div
+            style="
+              color:#e30613;
+              font-size:10px;
+              font-weight:900;
+              letter-spacing:1px;
+              margin-bottom:8px;
+            "
+          >
+            🔧 NGƯỜI CHẠY / LẮP
+          </div>
+
 
           <div
             style="
               font-size:19px;
               font-weight:900;
-              margin-bottom:7px;
+              color:#18181b;
+              line-height:1.3;
             "
           >
 
-            👤
-
-            ${escapeHTML(
-              customer.customer_name ||
-              "Chưa có tên"
-            )}
+            ${
+              escapeHTML(
+                customer.installer_name ||
+                "Chưa cập nhật"
+              )
+            }
 
           </div>
 
 
           <div
             style="
-              color:#2563eb;
+              margin-top:5px;
+              font-size:10px;
+              color:#71717a;
+            "
+          >
+            Thông tin ưu tiên
+          </div>
+
+        </div>
+
+
+        <!-- SHIPPER -->
+
+        <div
+          style="
+            background:#fafafa;
+            border:
+              1px solid #e4e4e7;
+            border-radius:12px;
+            padding:16px;
+            min-height:105px;
+          "
+        >
+
+          <div
+            style="
+              color:#71717a;
+              font-size:10px;
               font-weight:900;
-              font-size:15px;
+              letter-spacing:1px;
+              margin-bottom:8px;
+            "
+          >
+            🚚 SHIPPER CHẠY
+          </div>
+
+
+          <div
+            style="
+              font-size:16px;
+              font-weight:800;
+              color:#27272a;
+              line-height:1.3;
             "
           >
 
-            📞
-
-            ${escapeHTML(
-              customer.phone ||
-              ""
-            )}
+            ${
+              escapeHTML(
+                customer.shipper_name ||
+                "Chưa cập nhật"
+              )
+            }
 
           </div>
 
         </div>
 
 
-        <div
-          style="
-            display:flex;
-            gap:7px;
-            flex-wrap:wrap;
-          "
-        >
-
-          <button
-            type="button"
-            onclick="editCustomer('${customer.id}')"
-            style="
-              border:0;
-              background:#eff6ff;
-              color:#2563eb;
-              padding:8px 11px;
-              border-radius:9px;
-              cursor:pointer;
-              font-weight:800;
-            "
-          >
-            ✏️ Sửa
-          </button>
-
-
-          <button
-            type="button"
-            onclick="deleteCustomer('${customer.id}')"
-            style="
-              border:0;
-              background:#fef2f2;
-              color:#dc2626;
-              padding:8px 11px;
-              border-radius:9px;
-              cursor:pointer;
-              font-weight:800;
-            "
-          >
-            🗑️ Xóa
-          </button>
-
-        </div>
-
       </div>
 
 
-      <!-- INFO -->
-
-      <div
-        style="
-          display:grid;
-          grid-template-columns:repeat(2,minmax(0,1fr));
-          gap:10px;
-          margin-top:18px;
-        "
-      >
-
-        <div
-          style="
-            background:#f8fafc;
-            border-radius:12px;
-            padding:13px;
-            line-height:1.7;
-          "
-        >
-
-          🚚
-
-          <b>
-            Shipper chạy
-          </b>
-
-          <br>
-
-          ${escapeHTML(
-            customer.shipper_name ||
-            "Chưa có"
-          )}
-
-        </div>
-
-
-        <div
-          style="
-            background:#f8fafc;
-            border-radius:12px;
-            padding:13px;
-            line-height:1.7;
-          "
-        >
-
-          🔧
-
-          <b>
-            Người chạy / lắp
-          </b>
-
-          <br>
-
-          ${escapeHTML(
-            customer.installer_name ||
-            "Chưa có"
-          )}
-
-        </div>
-
-      </div>
-
-
-      <!-- ADDRESS -->
+      <!-- =====================================
+           ADDRESS
+      ====================================== -->
 
       ${
         address
@@ -669,33 +1088,84 @@ function createCustomerCard(
 
             <div
               style="
-                margin-top:10px;
-                background:#eff6ff;
+                margin:
+                  0 18px 18px;
+                padding:17px;
+                background:
+                  linear-gradient(
+                    135deg,
+                    #fff7ed,
+                    #ffffff
+                  );
+                border:
+                  1px solid #fed7aa;
+                border-left:
+                  5px solid #f97316;
                 border-radius:12px;
-                padding:13px;
-                line-height:1.7;
               "
             >
 
-              📍
+              <div
+                style="
+                  color:#ea580c;
+                  font-size:10px;
+                  font-weight:900;
+                  letter-spacing:1px;
+                  margin-bottom:7px;
+                "
+              >
 
-              <b>
-                Địa chỉ
-              </b>
+                📍 ĐỊA CHỈ GIAO HÀNG
 
-              <br>
+              </div>
 
-              ${escapeHTML(address)}
+
+              <div
+                style="
+                  font-size:16px;
+                  font-weight:800;
+                  color:#18181b;
+                  line-height:1.55;
+                "
+              >
+
+                ${
+                  escapeHTML(address)
+                }
+
+              </div>
 
             </div>
 
           `
 
-          : ""
+          : `
+
+            <div
+              style="
+                margin:
+                  0 18px 18px;
+                padding:14px;
+                background:#fafafa;
+                border:
+                  1px dashed #d4d4d8;
+                border-radius:10px;
+                color:#a1a1aa;
+                font-size:11px;
+              "
+            >
+
+              📍 Chưa cập nhật địa chỉ
+
+            </div>
+
+          `
       }
 
 
-      <!-- NOTE -->
+      <!-- =====================================
+           NOTE
+      ====================================== -->
 
       ${
         customer.note
@@ -704,25 +1174,44 @@ function createCustomerCard(
 
             <div
               style="
-                margin-top:10px;
-                background:#fff7ed;
-                border-radius:12px;
-                padding:13px;
-                line-height:1.7;
+                margin:
+                  0 18px 18px;
+                padding:14px;
+                background:#f4f4f5;
+                border-radius:10px;
               "
             >
 
-              📝
+              <div
+                style="
+                  color:#71717a;
+                  font-size:9px;
+                  font-weight:900;
+                  letter-spacing:1px;
+                  margin-bottom:5px;
+                "
+              >
 
-              <b>
-                Ghi chú
-              </b>
+                📝 GHI CHÚ
 
-              <br>
+              </div>
 
-              ${escapeHTML(
-                customer.note
-              )}
+
+              <div
+                style="
+                  font-size:12px;
+                  color:#3f3f46;
+                  line-height:1.6;
+                "
+              >
+
+                ${
+                  escapeHTML(
+                    customer.note
+                  )
+                }
+
+              </div>
 
             </div>
 
@@ -731,202 +1220,139 @@ function createCustomerCard(
           : ""
       }
 
-    </div>
+
+      <!-- =====================================
+           CREATED
+      ====================================== -->
+
+      ${
+        customer.created_at
+
+          ? `
+
+            <div
+              style="
+                padding:
+                  0 18px 16px;
+                color:#a1a1aa;
+                font-size:9px;
+              "
+            >
+
+              🕐 Cập nhật:
+              ${
+                escapeHTML(
+                  formatDate(
+                    customer.created_at
+                  )
+                )
+              }
+
+            </div>
+
+          `
+
+          : ""
+      }
+
+
+    </article>
 
   `;
 
 }
 
 
-// ============================================================
-// FORM DATA
-// ============================================================
-
-function getFormData() {
-
-  return {
-
-    phone:
-      cleanPhone(
-        getValue("phone")
-      ),
-
-    customer_name:
-      getValue(
-        "customer_name"
-      ),
-
-    shipper_name:
-      getValue(
-        "shipper_name"
-      ),
-
-    installer_name:
-      getValue(
-        "installer_name"
-      ),
-
-    hamlet:
-      getValue(
-        "hamlet"
-      ),
-
-    commune:
-      getValue(
-        "commune"
-      ),
-
-    address:
-      getValue(
-        "address"
-      ),
-
-    note:
-      getValue(
-        "note"
-      )
-
-  };
-
-}
-
-
-// ============================================================
-// RESET FORM
-// ============================================================
-
-function resetForm() {
-
-  if (!customerForm) return;
-
-
-  customerForm.reset();
-
-
-  delete customerForm.dataset.editId;
-
-
-  if (saveButton) {
-
-    saveButton.disabled =
-      false;
-
-    saveButton.innerHTML =
-      "💾 LƯU KHÁCH HÀNG";
-
-  }
-
-}
-
-
-// ============================================================
-// SUBMIT FORM
-// ============================================================
-
-if (customerForm) {
-
-  customerForm.addEventListener(
-    "submit",
-    async function(event) {
-
-      event.preventDefault();
-
-
-      const formData =
-        getFormData();
-
-
-      if (!formData.phone) {
-
-        alert(
-          "⚠️ Vui lòng nhập số điện thoại."
-        );
-
-        return;
-
-      }
-
-
-      if (
-        formData.phone.length < 8
-      ) {
-
-        alert(
-          "⚠️ Số điện thoại không hợp lệ."
-        );
-
-        return;
-
-      }
-
-
-      const editId =
-        customerForm.dataset.editId;
-
-
-      if (editId) {
-
-        await updateCustomer(
-          editId,
-          formData
-        );
-
-      }
-
-      else {
-
-        await addCustomer(
-          formData
-        );
-
-      }
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// ADD CUSTOMER
-// ============================================================
+/* =========================================================
+   15. ADD CUSTOMER
+========================================================= */
 
 async function addCustomer(
-  customer
+  event
 ) {
 
-  if (saveButton) {
+  if (event) {
 
-    saveButton.disabled =
-      true;
-
-    saveButton.innerHTML =
-      "⏳ ĐANG LƯU...";
+    event.preventDefault();
 
   }
+
+
+  if (!supabaseClient) {
+
+    showMessage(
+      "Supabase chưa được khởi tạo.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const data =
+    getFormData();
+
+
+  const validation =
+    validatePhone(
+      data.phone
+    );
+
+
+  if (!validation.valid) {
+
+    showMessage(
+      validation.message,
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  setSaveLoading(true);
 
 
   try {
 
-    // Kiểm tra trùng số điện thoại
+    /*
+     * Kiểm tra số điện thoại
+     * đã tồn tại hay chưa.
+     */
 
     const {
       data: existing,
       error: checkError
-    } =
-      await supabaseClient
-        .from("customers")
-        .select("id")
-        .eq(
-          "phone",
-          customer.phone
-        )
-        .limit(1);
+    } = await supabaseClient
+
+      .from("customers")
+
+      .select("id")
+
+      .eq(
+        "phone",
+        data.phone
+      )
+
+      .limit(1);
 
 
     if (checkError) {
 
-      throw checkError;
+      console.error(
+        checkError
+      );
+
+      showMessage(
+        getSupabaseError(
+          checkError
+        ),
+        "error"
+      );
+
+      return;
 
     }
 
@@ -936,322 +1362,384 @@ async function addCustomer(
       existing.length > 0
     ) {
 
-      alert(
-        "⚠️ Số điện thoại này đã tồn tại!"
-      );
-
-      return;
-
-    }
+      const confirmUpdate =
+        confirm(
+          "Số điện thoại này đã tồn tại.\n\nBạn có muốn cập nhật thông tin không?"
+        );
 
 
-    // INSERT
+      if (!confirmUpdate) {
 
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
+        return;
+
+      }
+
+
+      const id =
+        existing[0].id;
+
+
+      const {
+        error: updateError
+      } = await supabaseClient
+
         .from("customers")
-        .insert([
-          customer
-        ])
-        .select();
 
+        .update(data)
 
-    if (error) {
-
-      throw error;
-
-    }
-
-
-    console.log(
-      "Đã thêm:",
-      data
-    );
-
-
-    alert(
-      "✅ Đã thêm khách hàng thành công!"
-    );
-
-
-    resetForm();
-
-
-    // Tự động tìm khách vừa thêm
-
-    if (searchInput) {
-
-      searchInput.value =
-        customer.phone;
-
-      await searchCustomers();
-
-    }
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "INSERT ERROR:",
-      error
-    );
-
-
-    alert(
-      "❌ Không thể lưu.\n\n" +
-      error.message
-    );
-
-  }
-
-  finally {
-
-    if (saveButton) {
-
-      saveButton.disabled =
-        false;
-
-      saveButton.innerHTML =
-        "💾 LƯU KHÁCH HÀNG";
-
-    }
-
-  }
-
-}
-
-
-// ============================================================
-// EDIT CUSTOMER
-// ============================================================
-
-async function editCustomer(id) {
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("customers")
-        .select("*")
-        .eq(
-          "id",
-          id
-        )
-        .single();
-
-
-    if (error) {
-
-      throw error;
-
-    }
-
-
-    const fields = {
-
-      phone:
-        data.phone || "",
-
-      customer_name:
-        data.customer_name || "",
-
-      shipper_name:
-        data.shipper_name || "",
-
-      installer_name:
-        data.installer_name || "",
-
-      hamlet:
-        data.hamlet || "",
-
-      commune:
-        data.commune || "",
-
-      address:
-        data.address || "",
-
-      note:
-        data.note || ""
-
-    };
-
-
-    Object.keys(fields)
-      .forEach(
-        key => {
-
-          const element =
-            $(key);
-
-          if (element) {
-
-            element.value =
-              fields[key];
-
-          }
-
-        }
-      );
-
-
-    if (customerForm) {
-
-      customerForm.dataset.editId =
-        id;
-
-    }
-
-
-    if (saveButton) {
-
-      saveButton.innerHTML =
-        "🔄 CẬP NHẬT KHÁCH HÀNG";
-
-    }
-
-
-    customerForm.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "EDIT ERROR:",
-      error
-    );
-
-
-    alert(
-      "❌ Không thể lấy dữ liệu.\n\n" +
-      error.message
-    );
-
-  }
-
-}
-
-
-// ============================================================
-// UPDATE CUSTOMER
-// ============================================================
-
-async function updateCustomer(
-  id,
-  customer
-) {
-
-  if (saveButton) {
-
-    saveButton.disabled =
-      true;
-
-    saveButton.innerHTML =
-      "⏳ ĐANG CẬP NHẬT...";
-
-  }
-
-
-  try {
-
-    // Kiểm tra trùng
-
-    const {
-      data: duplicate,
-      error: duplicateError
-    } =
-      await supabaseClient
-        .from("customers")
-        .select("id")
-        .eq(
-          "phone",
-          customer.phone
-        )
-        .neq(
-          "id",
-          id
-        )
-        .limit(1);
-
-
-    if (duplicateError) {
-
-      throw duplicateError;
-
-    }
-
-
-    if (
-      duplicate &&
-      duplicate.length > 0
-    ) {
-
-      alert(
-        "⚠️ Số điện thoại này đã thuộc khách hàng khác."
-      );
-
-      return;
-
-    }
-
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("customers")
-        .update({
-
-          phone:
-            customer.phone,
-
-          customer_name:
-            customer.customer_name,
-
-          shipper_name:
-            customer.shipper_name,
-
-          installer_name:
-            customer.installer_name,
-
-          hamlet:
-            customer.hamlet,
-
-          commune:
-            customer.commune,
-
-          address:
-            customer.address,
-
-          note:
-            customer.note
-
-        })
         .eq(
           "id",
           id
         );
 
 
-    if (error) {
+      if (updateError) {
 
-      throw error;
+        console.error(
+          updateError
+        );
+
+        showMessage(
+          getSupabaseError(
+            updateError
+          ),
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      showMessage(
+        "Đã cập nhật thông tin khách hàng.",
+        "success"
+      );
+
+
+    } else {
+
+
+      /*
+       * Thêm khách hàng mới
+       */
+
+      const {
+        error
+      } = await supabaseClient
+
+        .from("customers")
+
+        .insert([
+          data
+        ]);
+
+
+      if (error) {
+
+        console.error(
+          "Insert error:",
+          error
+        );
+
+        showMessage(
+          getSupabaseError(
+            error
+          ),
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      showMessage(
+        "Đã lưu khách hàng thành công.",
+        "success"
+      );
 
     }
 
 
-    alert(
-      "✅ Đã cập nhật khách hàng!"
+    resetForm();
+
+
+    /*
+     * Nếu đang tìm kiếm thì
+     * load lại kết quả.
+     */
+
+    const keyword =
+      searchInput
+        ? normalizePhone(
+            searchInput.value
+          )
+        : "";
+
+
+    if (keyword) {
+
+      await searchCustomers();
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      "Add customer error:",
+      error
+    );
+
+    showMessage(
+      error.message ||
+      "Không thể lưu dữ liệu.",
+      "error"
+    );
+
+
+  } finally {
+
+    setSaveLoading(false);
+
+  }
+
+}
+
+
+/* =========================================================
+   16. EDIT CUSTOMER
+========================================================= */
+
+async function editCustomer(
+  id
+) {
+
+  if (!supabaseClient) {
+
+    showMessage(
+      "Supabase chưa được khởi tạo.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (!id) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const {
+      data,
+      error
+    } = await supabaseClient
+
+      .from("customers")
+
+      .select("*")
+
+      .eq(
+        "id",
+        id
+      )
+
+      .single();
+
+
+    if (error) {
+
+      console.error(
+        error
+      );
+
+      showMessage(
+        getSupabaseError(error),
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    /*
+     * Đổ dữ liệu vào form
+     */
+
+    setInputValue(
+      "phone",
+      data.phone
+    );
+
+    setInputValue(
+      "customer_name",
+      data.customer_name
+    );
+
+    setInputValue(
+      "shipper_name",
+      data.shipper_name
+    );
+
+    setInputValue(
+      "installer_name",
+      data.installer_name
+    );
+
+    setInputValue(
+      "hamlet",
+      data.hamlet
+    );
+
+    setInputValue(
+      "commune",
+      data.commune
+    );
+
+    setInputValue(
+      "address",
+      data.address
+    );
+
+    setInputValue(
+      "note",
+      data.note
+    );
+
+
+    /*
+     * Lưu ID đang sửa
+     */
+
+    customerForm.dataset.editingId =
+      id;
+
+
+    if (saveButton) {
+
+      saveButton.innerHTML =
+        "💾 CẬP NHẬT THÔNG TIN";
+
+    }
+
+
+    /*
+     * Scroll tới form
+     */
+
+    const formSection =
+      document.querySelector(
+        ".add-section"
+      );
+
+
+    if (formSection) {
+
+      formSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      error
+    );
+
+    showMessage(
+      error.message ||
+      "Không thể tải thông tin.",
+      "error"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   17. UPDATE CUSTOMER
+========================================================= */
+
+async function updateCustomer(
+  id
+) {
+
+  if (!id) {
+
+    return false;
+
+  }
+
+
+  const data =
+    getFormData();
+
+
+  const validation =
+    validatePhone(
+      data.phone
+    );
+
+
+  if (!validation.valid) {
+
+    showMessage(
+      validation.message,
+      "error"
+    );
+
+    return false;
+
+  }
+
+
+  try {
+
+    const {
+      error
+    } = await supabaseClient
+
+      .from("customers")
+
+      .update(data)
+
+      .eq(
+        "id",
+        id
+      );
+
+
+    if (error) {
+
+      console.error(
+        error
+      );
+
+      showMessage(
+        getSupabaseError(error),
+        "error"
+      );
+
+      return false;
+
+    }
+
+
+    showMessage(
+      "Đã cập nhật thông tin.",
+      "success"
     );
 
 
@@ -1260,61 +1748,82 @@ async function updateCustomer(
 
     if (searchInput) {
 
-      searchInput.value =
-        customer.phone;
+      const keyword =
+        normalizePhone(
+          searchInput.value
+        );
 
-      await searchCustomers();
+
+      if (keyword) {
+
+        await searchCustomers();
+
+      }
 
     }
 
-  }
 
-  catch (error) {
+    return true;
+
+
+  } catch (error) {
 
     console.error(
-      "UPDATE ERROR:",
       error
     );
 
-
-    alert(
-      "❌ Không thể cập nhật.\n\n" +
-      error.message
+    showMessage(
+      error.message ||
+      "Không thể cập nhật.",
+      "error"
     );
 
-  }
-
-  finally {
-
-    if (saveButton) {
-
-      saveButton.disabled =
-        false;
-
-      saveButton.innerHTML =
-        "💾 LƯU KHÁCH HÀNG";
-
-    }
+    return false;
 
   }
 
 }
 
 
-// ============================================================
-// DELETE CUSTOMER
-// ============================================================
+/* =========================================================
+   18. DELETE CUSTOMER
+========================================================= */
 
-async function deleteCustomer(id) {
+async function deleteCustomer(
+  id
+) {
 
-  const confirmDelete =
+  if (!supabaseClient) {
+
+    showMessage(
+      "Supabase chưa được khởi tạo.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (!id) {
+
+    showMessage(
+      "Không xác định được khách hàng.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const confirmed =
     confirm(
-      "⚠️ Bạn có chắc muốn xóa khách hàng này?\n\n" +
-      "Dữ liệu sẽ bị xóa khỏi database."
+      "Bạn có chắc muốn xóa thông tin khách hàng này không?"
     );
 
 
-  if (!confirmDelete) {
+  if (!confirmed) {
 
     return;
 
@@ -1325,239 +1834,480 @@ async function deleteCustomer(id) {
 
     const {
       error
-    } =
-      await supabaseClient
-        .from("customers")
-        .delete()
-        .eq(
-          "id",
-          id
-        );
+    } = await supabaseClient
 
+      .from("customers")
 
-    if (error) {
+      .delete()
 
-      throw error;
-
-    }
-
-
-    alert(
-      "✅ Đã xóa khách hàng!"
-    );
-
-
-    await searchCustomers();
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "DELETE ERROR:",
-      error
-    );
-
-
-    alert(
-      "❌ Không thể xóa.\n\n" +
-      error.message
-    );
-
-  }
-
-}
-
-
-// ============================================================
-// SEARCH BUTTON
-// ============================================================
-
-if (searchButton) {
-
-  searchButton.addEventListener(
-    "click",
-    searchCustomers
-  );
-
-}
-
-
-// ============================================================
-// ENTER SEARCH
-// ============================================================
-
-if (searchInput) {
-
-  searchInput.addEventListener(
-    "keydown",
-    function(event) {
-
-      if (
-        event.key === "Enter"
-      ) {
-
-        event.preventDefault();
-
-        searchCustomers();
-
-      }
-
-    }
-  );
-
-
-  searchInput.addEventListener(
-    "input",
-    function() {
-
-      this.value =
-        cleanPhone(
-          this.value
-        );
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// CLEAR SEARCH
-// ============================================================
-
-if (clearSearch) {
-
-  clearSearch.addEventListener(
-    "click",
-    function() {
-
-      if (searchInput) {
-
-        searchInput.value =
-          "";
-
-        searchInput.focus();
-
-      }
-
-
-      if (resultCount) {
-
-        resultCount.textContent =
-          "0 kết quả";
-
-      }
-
-
-      showEmpty(
-        "Chưa có kết quả",
-        "Nhập số điện thoại phía trên để bắt đầu tra cứu."
+      .eq(
+        "id",
+        id
       );
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// PHONE INPUT
-// ============================================================
-
-const phoneInput =
-  $("phone");
-
-
-if (phoneInput) {
-
-  phoneInput.addEventListener(
-    "input",
-    function() {
-
-      this.value =
-        cleanPhone(
-          this.value
-        );
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// TEST DATABASE
-// ============================================================
-
-async function testDatabase() {
-
-  try {
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("customers")
-        .select("id")
-        .limit(1);
 
 
     if (error) {
 
       console.error(
-        "❌ Database:",
+        "Delete error:",
         error
       );
 
-      return false;
+      showMessage(
+        getSupabaseError(error),
+        "error"
+      );
+
+      return;
 
     }
 
 
-    console.log(
-      "✅ JT DATABASE OK"
+    showMessage(
+      "Đã xóa khách hàng.",
+      "success"
     );
 
 
-    return true;
+    /*
+     * Tìm lại kết quả
+     */
 
-  }
+    if (searchInput) {
 
-  catch (error) {
+      const keyword =
+        normalizePhone(
+          searchInput.value
+        );
+
+
+      if (keyword) {
+
+        await searchCustomers();
+
+      } else {
+
+        renderResults([]);
+
+      }
+
+    }
+
+
+  } catch (error) {
 
     console.error(
-      "❌ Database connection:",
       error
     );
 
-    return false;
+    showMessage(
+      error.message ||
+      "Không thể xóa khách hàng.",
+      "error"
+    );
 
   }
 
 }
 
 
-// ============================================================
-// START
-// ============================================================
+/* =========================================================
+   19. SET INPUT
+========================================================= */
 
-console.log(
-  "🚚 JT SHIPPER READY"
-);
+function setInputValue(
+  id,
+  value
+) {
+
+  const element =
+    document.getElementById(id);
 
 
-testDatabase();
+  if (!element) {
+
+    console.warn(
+      "Không tìm thấy:",
+      id
+    );
+
+    return;
+
+  }
 
 
-// ============================================================
-// GLOBAL FUNCTIONS
-// ============================================================
+  element.value =
+    value ?? "";
 
-// Cho HTML onclick gọi được
+}
+
+
+/* =========================================================
+   20. RESET FORM
+========================================================= */
+
+function resetForm() {
+
+  if (customerForm) {
+
+    customerForm.reset();
+
+    delete customerForm.dataset.editingId;
+
+  }
+
+
+  if (saveButton) {
+
+    saveButton.disabled =
+      false;
+
+    saveButton.innerHTML =
+      "💾 LƯU THÔNG TIN";
+
+  }
+
+}
+
+
+/*
+ * Cho HTML onclick gọi được
+ */
+
+window.resetForm =
+  resetForm;
+
+
+/* =========================================================
+   21. SUPABASE ERROR
+========================================================= */
+
+function getSupabaseError(
+  error
+) {
+
+  if (!error) {
+
+    return "Không xác định được lỗi.";
+
+  }
+
+
+  /*
+   * RLS policy
+   */
+
+  if (
+    error.code === "42501" ||
+    String(error.message || "")
+      .toLowerCase()
+      .includes("row-level security")
+  ) {
+
+    return `
+Supabase đang chặn thao tác do Row Level Security (RLS).
+
+Bạn cần tạo policy cho bảng customers.
+
+Vào:
+Supabase → SQL Editor
+
+và chạy policy INSERT / SELECT / UPDATE / DELETE.
+    `.trim();
+
+  }
+
+
+  if (
+    error.code === "23505"
+  ) {
+
+    return (
+      "Số điện thoại này đã tồn tại."
+    );
+
+  }
+
+
+  if (
+    error.code === "42P01"
+  ) {
+
+    return (
+      'Không tìm thấy bảng "customers".'
+    );
+
+  }
+
+
+  return (
+    error.message ||
+    "Có lỗi xảy ra với Supabase."
+  );
+
+}
+
+
+/* =========================================================
+   22. CLEAR SEARCH
+========================================================= */
+
+function clearSearchInput() {
+
+  if (!searchInput) {
+
+    return;
+
+  }
+
+
+  searchInput.value = "";
+
+
+  renderResults([]);
+
+
+  if (resultCount) {
+
+    resultCount.textContent =
+      "0 kết quả";
+
+  }
+
+
+  searchInput.focus();
+
+}
+
+
+/* =========================================================
+   23. ENTER SEARCH
+========================================================= */
+
+function handleSearchKeydown(
+  event
+) {
+
+  if (
+    event.key === "Enter"
+  ) {
+
+    event.preventDefault();
+
+    searchCustomers();
+
+  }
+
+}
+
+
+/* =========================================================
+   24. FORM SUBMIT
+========================================================= */
+
+async function handleFormSubmit(
+  event
+) {
+
+  event.preventDefault();
+
+
+  if (!supabaseClient) {
+
+    showMessage(
+      "Supabase chưa được khởi tạo.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * Nếu đang edit
+   */
+
+  const editingId =
+    customerForm
+      ? customerForm.dataset.editingId
+      : "";
+
+
+  if (editingId) {
+
+    setSaveLoading(true);
+
+    try {
+
+      await updateCustomer(
+        editingId
+      );
+
+    } finally {
+
+      setSaveLoading(false);
+
+    }
+
+    return;
+
+  }
+
+
+  /*
+   * Nếu thêm mới
+   */
+
+  await addCustomer(
+    event
+  );
+
+}
+
+
+/* =========================================================
+   25. EVENT LISTENERS
+========================================================= */
+
+function initEvents() {
+
+
+  /*
+   * Search
+   */
+
+  if (searchButton) {
+
+    searchButton.addEventListener(
+      "click",
+      searchCustomers
+    );
+
+  }
+
+
+  /*
+   * Enter
+   */
+
+  if (searchInput) {
+
+    searchInput.addEventListener(
+      "keydown",
+      handleSearchKeydown
+    );
+
+  }
+
+
+  /*
+   * Clear
+   */
+
+  if (clearSearch) {
+
+    clearSearch.addEventListener(
+      "click",
+      clearSearchInput
+    );
+
+  }
+
+
+  /*
+   * Form
+   */
+
+  if (customerForm) {
+
+    customerForm.addEventListener(
+      "submit",
+      handleFormSubmit
+    );
+
+  }
+
+
+  console.log(
+    "Events initialized."
+  );
+
+}
+
+
+/* =========================================================
+   26. INITIALIZE APP
+========================================================= */
+
+function initApp() {
+
+  console.log(
+    "JT Shipper starting..."
+  );
+
+
+  initDOM();
+
+
+  const supabaseReady =
+    initSupabase();
+
+
+  if (!supabaseReady) {
+
+    renderError(
+      "Không thể kết nối Supabase."
+    );
+
+    return;
+
+  }
+
+
+  initEvents();
+
+
+  console.log(
+    "JT Shipper ready."
+  );
+
+}
+
+
+/* =========================================================
+   27. START
+========================================================= */
+
+if (
+  document.readyState ===
+  "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    initApp
+  );
+
+} else {
+
+  initApp();
+
+}
+
+
+/* =========================================================
+   28. GLOBAL FUNCTIONS
+========================================================= */
 
 window.searchCustomers =
   searchCustomers;
+
+window.addCustomer =
+  addCustomer;
+
+window.updateCustomer =
+  updateCustomer;
 
 window.editCustomer =
   editCustomer;
@@ -1565,5 +2315,5 @@ window.editCustomer =
 window.deleteCustomer =
   deleteCustomer;
 
-window.resetForm =
-  resetForm;
+window.escapeHTML =
+  escapeHTML;
