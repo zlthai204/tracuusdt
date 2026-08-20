@@ -10,14 +10,33 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>JT Shipper - Tra cứu khách hàng</title>
-
-  <link
-    rel="stylesheet"
-    href="style.css"
+  <meta
+    name="theme-color"
+    content="#e30613"
   >
 
-  <!-- SUPABASE -->
+  <title>
+    JT Shipper | Tra cứu khách hàng
+  </title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
   <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
     defer
@@ -34,121 +53,164 @@
 <body>
 
 
-  <!-- =====================================================
-       BACKGROUND
-  ====================================================== -->
+  <!-- ================================================
+       TOP BAR
+  ================================================= -->
 
-  <div class="bg-circle circle-1"></div>
-  <div class="bg-circle circle-2"></div>
-  <div class="bg-circle circle-3"></div>
+  <header class="topbar">
 
+    <div class="topbar-inner">
 
-  <!-- =====================================================
-       HEADER
-  ====================================================== -->
-
-  <header class="header">
-
-    <div class="header-inner">
 
       <div class="brand">
 
         <div class="brand-logo">
-          JT
+
+          <span>
+            J&T
+          </span>
+
         </div>
 
-        <div class="brand-text">
+        <div class="brand-info">
 
-          <h1>
+          <strong>
             JT SHIPPER
-          </h1>
+          </strong>
 
-          <p>
-            Hệ thống tra cứu khách hàng
-          </p>
+          <small>
+            HỆ THỐNG TRA CỨU NỘI BỘ
+          </small>
 
         </div>
 
       </div>
 
 
-      <div class="header-status">
+      <div class="online">
 
-        <span class="status-dot"></span>
+        <i></i>
 
-        HỆ THỐNG ONLINE
+        ONLINE
 
       </div>
+
 
     </div>
 
   </header>
 
 
-  <!-- =====================================================
+  <!-- ================================================
+       RED LINE
+  ================================================= -->
+
+  <div class="red-line"></div>
+
+
+  <!-- ================================================
        MAIN
-  ====================================================== -->
+  ================================================= -->
 
-  <main class="container">
+  <main class="page">
 
 
-    <!-- =================================================
+    <!-- ==============================================
          HERO
-    ================================================== -->
+    =============================================== -->
 
     <section class="hero">
 
-      <div class="hero-badge">
-        🚚 JT DELIVERY SYSTEM
+
+      <div class="hero-left">
+
+        <div class="mini-title">
+
+          <span></span>
+
+          JT DELIVERY SUPPORT
+
+        </div>
+
+
+        <h1>
+
+          TRA CỨU
+          <b>KHÁCH HÀNG</b>
+
+        </h1>
+
+
+        <p>
+
+          Tìm nhanh thông tin khách hàng,
+          người chạy/lắp và địa chỉ giao hàng.
+
+        </p>
+
       </div>
 
-      <h2>
-        TRA CỨU
-        <span>KHÁCH HÀNG</span>
-      </h2>
 
-      <p>
-        Nhập đầy đủ số điện thoại hoặc
-        <strong>2 - 4 số cuối</strong>
-        để tra cứu nhanh.
-      </p>
+      <div class="hero-number">
+
+        <strong>
+          01
+        </strong>
+
+        <span>
+          SEARCH
+        </span>
+
+      </div>
+
 
     </section>
 
 
-    <!-- =================================================
-         SEARCH BOX
-    ================================================== -->
+    <!-- ==============================================
+         SEARCH
+    =============================================== -->
 
-    <section class="search-card">
+    <section class="search-panel">
 
-      <div class="search-title">
 
-        <div class="search-icon">
-          🔎
+      <div class="search-panel-header">
+
+        <div class="search-title">
+
+          <div class="search-symbol">
+            🔎
+          </div>
+
+          <div>
+
+            <strong>
+              Tìm kiếm thông tin
+            </strong>
+
+            <span>
+              Full số điện thoại hoặc 2 - 4 số cuối
+            </span>
+
+          </div>
+
         </div>
 
-        <div>
 
-          <h3>
-            Tra cứu số điện thoại
-          </h3>
-
-          <p>
-            Có thể nhập full số hoặc 2 - 4 số cuối
-          </p>
-
+        <div class="search-tip">
+          🔐 DATABASE
         </div>
 
       </div>
 
 
-      <div class="search-row">
+      <div class="search-box">
 
-        <div class="input-wrapper">
 
-          <span>
-            📞
+        <div class="phone-input">
+
+          <span class="phone-icon">
+            📱
           </span>
 
           <input
@@ -156,13 +218,13 @@
             type="text"
             inputmode="numeric"
             autocomplete="off"
-            placeholder="Ví dụ: 0912345678 hoặc 5678"
+            placeholder="Nhập số điện thoại..."
           >
 
           <button
             id="clearSearch"
             type="button"
-            class="clear-btn"
+            aria-label="Xóa"
           >
             ×
           </button>
@@ -173,77 +235,87 @@
         <button
           id="searchButton"
           type="button"
-          class="search-button"
+          class="search-btn"
         >
-          🔎 TRA CỨU
+
+          <span>
+            🔎
+          </span>
+
+          TRA CỨU
+
         </button>
 
       </div>
 
 
-      <div class="search-hint">
+      <div class="search-note">
 
-        <span>💡</span>
+        <span>●</span>
 
-        Nhập 2 - 4 số cuối để tìm các khách hàng
-        có số điện thoại tương ứng.
+        Ví dụ:
+        <b>0912345678</b>
+        hoặc
+        <b>5678</b>
 
       </div>
+
 
     </section>
 
 
-    <!-- =================================================
-         RESULT HEADER
-    ================================================== -->
+    <!-- ==============================================
+         RESULT TITLE
+    =============================================== -->
 
-    <section class="result-header">
+    <section class="result-top">
+
 
       <div>
 
-        <span class="result-label">
-          KẾT QUẢ TRA CỨU
+        <span class="section-label">
+          DATABASE
         </span>
 
-        <h3>
-          Danh sách khách hàng
-        </h3>
+        <h2>
+          Kết quả tra cứu
+        </h2>
 
       </div>
 
 
       <div
         id="resultCount"
-        class="result-count"
+        class="count"
       >
         0 kết quả
       </div>
 
+
     </section>
 
 
-    <!-- =================================================
+    <!-- ==============================================
          RESULTS
-    ================================================== -->
+    =============================================== -->
 
     <section
       id="results"
       class="results"
     >
 
-      <div class="empty-state">
+      <div class="empty">
 
         <div class="empty-icon">
-          🔍
+          🔎
         </div>
 
-        <h3>
-          Chưa có kết quả
-        </h3>
+        <strong>
+          Chưa có dữ liệu
+        </strong>
 
         <p>
-          Nhập số điện thoại phía trên
-          để bắt đầu tra cứu.
+          Nhập số điện thoại để tra cứu khách hàng.
         </p>
 
       </div>
@@ -251,30 +323,33 @@
     </section>
 
 
-    <!-- =================================================
+    <!-- ==============================================
          ADD CUSTOMER
-    ================================================== -->
+    =============================================== -->
 
-    <section class="form-section">
+    <section class="add-section">
 
 
-      <div class="section-heading">
+      <div class="add-header">
 
-        <div class="heading-icon">
-          ➕
+
+        <div class="add-icon">
+          +
         </div>
+
 
         <div>
 
           <span>
-            QUẢN LÝ DỮ LIỆU
+            DATABASE
           </span>
 
           <h2>
-            Thêm khách hàng
+            Thêm thông tin khách hàng
           </h2>
 
         </div>
+
 
       </div>
 
@@ -287,24 +362,23 @@
 
         <!-- PHONE -->
 
-        <div class="form-group">
+        <div class="field">
 
-          <label for="phone">
-            Số điện thoại
+          <label>
+            SỐ ĐIỆN THOẠI
             <b>*</b>
           </label>
 
-          <div class="form-input">
+          <div class="input">
 
             <span>
-              📞
+              📱
             </span>
 
             <input
               id="phone"
               type="text"
               inputmode="numeric"
-              autocomplete="off"
               placeholder="Nhập số điện thoại"
               required
             >
@@ -314,15 +388,15 @@
         </div>
 
 
-        <!-- CUSTOMER NAME -->
+        <!-- CUSTOMER -->
 
-        <div class="form-group">
+        <div class="field">
 
-          <label for="customer_name">
-            Tên khách hàng
+          <label>
+            TÊN KHÁCH HÀNG
           </label>
 
-          <div class="form-input">
+          <div class="input">
 
             <span>
               👤
@@ -341,13 +415,13 @@
 
         <!-- SHIPPER -->
 
-        <div class="form-group">
+        <div class="field">
 
-          <label for="shipper_name">
-            Shipper chạy
+          <label>
+            SHIPPER CHẠY
           </label>
 
-          <div class="form-input">
+          <div class="input">
 
             <span>
               🚚
@@ -366,13 +440,13 @@
 
         <!-- INSTALLER -->
 
-        <div class="form-group">
+        <div class="field">
 
-          <label for="installer_name">
-            Người chạy / lắp
+          <label>
+            NGƯỜI CHẠY / LẮP
           </label>
 
-          <div class="form-input">
+          <div class="input input-important">
 
             <span>
               🔧
@@ -391,13 +465,13 @@
 
         <!-- HAMLET -->
 
-        <div class="form-group">
+        <div class="field">
 
-          <label for="hamlet">
-            Ấp
+          <label>
+            ẤP
           </label>
 
-          <div class="form-input">
+          <div class="input">
 
             <span>
               🏘️
@@ -416,13 +490,13 @@
 
         <!-- COMMUNE -->
 
-        <div class="form-group">
+        <div class="field">
 
-          <label for="commune">
-            Xã
+          <label>
+            XÃ
           </label>
 
-          <div class="form-input">
+          <div class="input">
 
             <span>
               📍
@@ -441,22 +515,22 @@
 
         <!-- ADDRESS -->
 
-        <div class="form-group full">
+        <div class="field full">
 
-          <label for="address">
-            Địa chỉ
+          <label>
+            ĐỊA CHỈ GIAO HÀNG
           </label>
 
-          <div class="form-input">
+          <div class="input input-address">
 
             <span>
-              🏠
+              📍
             </span>
 
             <input
               id="address"
               type="text"
-              placeholder="Số nhà, đường..."
+              placeholder="Số nhà, tên đường..."
             >
 
           </div>
@@ -466,39 +540,43 @@
 
         <!-- NOTE -->
 
-        <div class="form-group full">
+        <div class="field full">
 
-          <label for="note">
-            Ghi chú
+          <label>
+            GHI CHÚ
           </label>
 
           <textarea
             id="note"
-            rows="4"
-            placeholder="Nhập ghi chú về khách hàng..."
+            placeholder="Thông tin thêm..."
           ></textarea>
 
         </div>
 
 
-        <!-- BUTTON -->
-
-        <div class="form-actions">
+        <div class="form-buttons">
 
           <button
             id="saveButton"
             type="submit"
-            class="save-button"
+            class="save-btn"
           >
-            💾 LƯU KHÁCH HÀNG
+
+            💾
+            LƯU THÔNG TIN
+
           </button>
+
 
           <button
             type="reset"
-            class="reset-button"
+            class="reset-btn"
             onclick="resetForm()"
           >
-            ↻ Nhập lại
+
+            ↻
+            Nhập lại
+
           </button>
 
         </div>
@@ -506,24 +584,25 @@
 
       </form>
 
+
     </section>
 
 
   </main>
 
 
-  <!-- =====================================================
+  <!-- ================================================
        FOOTER
-  ====================================================== -->
+  ================================================= -->
 
-  <footer class="footer">
+  <footer>
 
-    <div>
+    <strong>
       JT SHIPPER
-    </div>
+    </strong>
 
     <span>
-      Hệ thống tra cứu nội bộ
+      Internal Customer Lookup System
     </span>
 
   </footer>
