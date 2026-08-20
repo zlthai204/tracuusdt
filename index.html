@@ -3,171 +3,235 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tra cứu Shipper</title>
+
+  <title>Tra cứu khách hàng - Shipper</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <header>
-    <div class="container">
-      <h1>🚚 Tra cứu Shipper</h1>
-      <p>Tra cứu khách hàng bằng số điện thoại</p>
+
+<header class="header">
+  <div class="container">
+    <h1>🚚 Tra cứu khách hàng</h1>
+    <p>Tra cứu bằng số điện thoại hoặc 2 - 4 số cuối</p>
+  </div>
+</header>
+
+
+<main class="container">
+
+  <!-- ================= SEARCH ================= -->
+
+  <section class="card">
+
+    <h2>🔎 Tra cứu</h2>
+
+    <div class="search-box">
+
+      <input
+        id="searchInput"
+        type="tel"
+        inputmode="numeric"
+        placeholder="Nhập SĐT hoặc 2 - 4 số cuối..."
+        autocomplete="off"
+      >
+
+      <button id="searchButton">
+        🔍 Tìm
+      </button>
+
     </div>
-  </header>
 
-  <main class="container">
+    <div class="hint">
+      Ví dụ: <b>0901234567</b> hoặc <b>4567</b>
+    </div>
 
-    <!-- Tìm kiếm -->
-    <section class="card">
-      <h2>🔎 Tra cứu</h2>
+  </section>
 
-      <div class="search-box">
-        <input
-          type="text"
-          id="searchInput"
-          maxlength="15"
-          placeholder="Nhập SĐT hoặc 2 - 4 số cuối..."
-        >
 
-        <button onclick="searchCustomers()">
-          Tìm kiếm
-        </button>
+  <!-- ================= RESULTS ================= -->
+
+  <section class="card">
+
+    <div class="result-header">
+
+      <h2>📋 Kết quả</h2>
+
+      <span id="resultCount">
+        0 kết quả
+      </span>
+
+    </div>
+
+    <div id="results">
+
+      <div class="empty">
+        Nhập số điện thoại để tra cứu.
       </div>
 
-      <p class="hint">
-        Ví dụ: 0901234567 hoặc 4567
-      </p>
-    </section>
+    </div>
 
-    <!-- Kết quả -->
-    <section class="card">
-      <div class="section-title">
-        <h2>📋 Kết quả</h2>
-        <span id="resultCount">0 kết quả</span>
-      </div>
+  </section>
 
-      <div id="results">
-        <div class="empty">
-          Nhập số điện thoại để bắt đầu tra cứu.
-        </div>
-      </div>
-    </section>
 
-    <!-- Thêm khách hàng -->
-    <section class="card">
-      <h2>➕ Thêm khách hàng</h2>
+  <!-- ================= ADD ================= -->
 
-      <form id="customerForm">
+  <section class="card">
 
-        <div class="grid">
+    <h2>➕ Thêm khách hàng</h2>
 
-          <div class="form-group">
-            <label>Số điện thoại *</label>
-            <input
-              id="phone"
-              type="tel"
-              required
-              placeholder="0901234567"
-            >
-          </div>
+    <form id="customerForm">
 
-          <div class="form-group">
-            <label>Tên khách hàng</label>
-            <input
-              id="customer_name"
-              type="text"
-              placeholder="Nguyễn Văn A"
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Shipper</label>
-            <input
-              id="shipper_name"
-              type="text"
-              placeholder="Tên shipper"
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Người chạy / lắp</label>
-            <input
-              id="installer_name"
-              type="text"
-              placeholder="Tên người chạy/lắp"
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Ấp</label>
-            <input
-              id="hamlet"
-              type="text"
-              placeholder="Ấp..."
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Xã / Phường</label>
-            <input
-              id="commune"
-              type="text"
-              placeholder="Xã / Phường..."
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Huyện / Thành phố</label>
-            <input
-              id="district"
-              type="text"
-              placeholder="Huyện..."
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Tỉnh / Thành phố</label>
-            <input
-              id="province"
-              type="text"
-              placeholder="Tỉnh..."
-            >
-          </div>
-
-        </div>
+      <div class="grid">
 
         <div class="form-group">
-          <label>Địa chỉ chi tiết</label>
+          <label>Số điện thoại *</label>
+
           <input
-            id="address"
-            type="text"
-            placeholder="Số nhà, đường..."
+            id="phone"
+            type="tel"
+            inputmode="numeric"
+            required
+            placeholder="0901234567"
           >
         </div>
 
+
         <div class="form-group">
-          <label>Ghi chú</label>
-          <textarea
-            id="note"
-            rows="4"
-            placeholder="Thông tin thêm..."
-          ></textarea>
+          <label>Tên khách hàng</label>
+
+          <input
+            id="customer_name"
+            type="text"
+            placeholder="Nguyễn Văn A"
+          >
         </div>
 
-        <button class="add-btn" type="submit">
-          💾 Lưu khách hàng
-        </button>
 
-      </form>
-    </section>
+        <div class="form-group">
+          <label>Tên shipper</label>
 
-  </main>
+          <input
+            id="shipper_name"
+            type="text"
+            placeholder="Tên shipper"
+          >
+        </div>
 
-  <footer>
-    <p>© 2026 Shipper Tra Cứu</p>
-  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
+        <div class="form-group">
+          <label>Người chạy / lắp</label>
+
+          <input
+            id="installer_name"
+            type="text"
+            placeholder="Tên người chạy/lắp"
+          >
+        </div>
+
+
+        <div class="form-group">
+          <label>Ấp</label>
+
+          <input
+            id="hamlet"
+            type="text"
+            placeholder="Ấp..."
+          >
+        </div>
+
+
+        <div class="form-group">
+          <label>Xã / Phường</label>
+
+          <input
+            id="commune"
+            type="text"
+            placeholder="Xã / Phường..."
+          >
+        </div>
+
+
+        <div class="form-group">
+          <label>Huyện / Thành phố</label>
+
+          <input
+            id="district"
+            type="text"
+            placeholder="Huyện / Thành phố..."
+          >
+        </div>
+
+
+        <div class="form-group">
+          <label>Tỉnh / Thành phố</label>
+
+          <input
+            id="province"
+            type="text"
+            placeholder="Tỉnh / Thành phố..."
+          >
+        </div>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Địa chỉ chi tiết</label>
+
+        <input
+          id="address"
+          type="text"
+          placeholder="Số nhà, đường..."
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Ghi chú</label>
+
+        <textarea
+          id="note"
+          rows="4"
+          placeholder="Thông tin thêm..."
+        ></textarea>
+
+      </div>
+
+
+      <button
+        class="save-button"
+        type="submit"
+        id="saveButton"
+      >
+        💾 Lưu khách hàng
+      </button>
+
+    </form>
+
+  </section>
+
+</main>
+
+
+<footer>
+
+  <p>
+    Shipper Tra Cứu © 2026
+  </p>
+
+</footer>
+
+
+<!-- Supabase phải load TRƯỚC app.js -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="app.js"></script>
+
 </body>
 </html>
