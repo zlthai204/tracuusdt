@@ -1,6 +1,12 @@
-// =====================================================
-// SUPABASE CONFIG
-// =====================================================
+// ============================================================
+// JT SHIPPER - APP.JS
+// HTML + JAVASCRIPT + SUPABASE
+// ============================================================
+
+
+// ============================================================
+// 1. SUPABASE CONFIG
+// ============================================================
 
 const SUPABASE_URL =
   "https://fwamplkwgsxotcykqxhd.supabase.co";
@@ -13,13 +19,17 @@ const SUPABASE_ANON_KEY =
 
 if (!window.supabase) {
 
+  console.error(
+    "Không tìm thấy thư viện Supabase."
+  );
+
   alert(
-    "Không tải được thư viện Supabase. " +
+    "❌ Không tải được Supabase.\n" +
     "Hãy kiểm tra kết nối Internet."
   );
 
   throw new Error(
-    "Supabase library chưa được load."
+    "Supabase library chưa được tải."
   );
 }
 
@@ -34,13 +44,13 @@ const supabaseClient =
 
 
 console.log(
-  "✅ Supabase client đã khởi tạo"
+  "✅ JT Shipper: Supabase đã khởi tạo"
 );
 
 
-// =====================================================
-// DOM
-// =====================================================
+// ============================================================
+// 2. LẤY CÁC ELEMENT HTML
+// ============================================================
 
 const searchInput =
   document.getElementById(
@@ -50,6 +60,11 @@ const searchInput =
 const searchButton =
   document.getElementById(
     "searchButton"
+  );
+
+const clearSearch =
+  document.getElementById(
+    "clearSearch"
   );
 
 const results =
@@ -73,9 +88,38 @@ const saveButton =
   );
 
 
-// =====================================================
-// HÀM CHUẨN HÓA SỐ ĐIỆN THOẠI
-// =====================================================
+// ============================================================
+// 3. KIỂM TRA ELEMENT
+// ============================================================
+
+if (!searchInput) {
+  console.error(
+    "Không tìm thấy #searchInput"
+  );
+}
+
+if (!searchButton) {
+  console.error(
+    "Không tìm thấy #searchButton"
+  );
+}
+
+if (!results) {
+  console.error(
+    "Không tìm thấy #results"
+  );
+}
+
+if (!customerForm) {
+  console.error(
+    "Không tìm thấy #customerForm"
+  );
+}
+
+
+// ============================================================
+// 4. CHUẨN HÓA SỐ ĐIỆN THOẠI
+// ============================================================
 
 function cleanPhone(phone) {
 
@@ -84,9 +128,9 @@ function cleanPhone(phone) {
 }
 
 
-// =====================================================
-// ESCAPE HTML
-// =====================================================
+// ============================================================
+// 5. ESCAPE HTML
+// ============================================================
 
 function escapeHTML(value) {
 
@@ -99,52 +143,125 @@ function escapeHTML(value) {
 }
 
 
-// =====================================================
-// TÌM KIẾM
-// =====================================================
+// ============================================================
+// 6. HIỂN THỊ THÔNG BÁO TRỐNG
+// ============================================================
+
+function showEmpty(message) {
+
+  if (!results) {
+    return;
+  }
+
+  results.innerHTML = `
+
+    <div class="empty-state">
+
+      <div class="empty-icon">
+        🔍
+      </div>
+
+      <h3>
+        ${message}
+      </h3>
+
+      <p>
+        Hãy thử nhập số điện thoại khác.
+      </p>
+
+    </div>
+
+  `;
+
+
+  if (resultCount) {
+
+    resultCount.textContent =
+      "0 kết quả";
+
+  }
+}
+
+
+// ============================================================
+// 7. LOADING
+// ============================================================
+
+function showLoading() {
+
+  results.innerHTML = `
+
+    <div class="empty-state">
+
+      <div class="empty-icon">
+        ⏳
+      </div>
+
+      <h3>
+        Đang tìm kiếm...
+      </h3>
+
+      <p>
+        Vui lòng chờ một chút.
+      </p>
+
+    </div>
+
+  `;
+
+}
+
+
+// ============================================================
+// 8. TÌM KIẾM KHÁCH HÀNG
+// ============================================================
 
 async function searchCustomers() {
 
   let keyword =
     searchInput.value.trim();
 
+
+  // Chỉ lấy số
+
   keyword =
     cleanPhone(keyword);
 
 
+  // Không nhập gì
+
   if (!keyword) {
 
     showEmpty(
-      "⚠️ Vui lòng nhập số điện thoại."
+      "Chưa nhập số điện thoại"
     );
 
     return;
   }
 
 
-  if (
-    keyword.length < 2
-  ) {
+  // Tối thiểu 2 số
+
+  if (keyword.length < 2) {
 
     showEmpty(
-      "⚠️ Vui lòng nhập ít nhất 2 số."
+      "Vui lòng nhập ít nhất 2 số"
     );
 
     return;
   }
 
 
-  searchButton.disabled = true;
+  // Disable nút
 
-  searchButton.textContent =
-    "⏳ Đang tìm";
+  searchButton.disabled =
+    true;
+
+  searchButton.innerHTML =
+    "⏳ ĐANG TÌM";
 
 
-  results.innerHTML = `
-    <div class="loading">
-      🔎 Đang tìm kiếm...
-    </div>
-  `;
+  showLoading();
 
 
   try {
@@ -161,8 +278,9 @@ async function searchCustomers() {
         );
 
 
-    // Full số điện thoại
-    // hoặc 5 số trở lên
+    // ======================================================
+    // FULL SỐ ĐIỆN THOẠI
+    // ======================================================
 
     if (keyword.length >= 5) {
 
@@ -174,7 +292,10 @@ async function searchCustomers() {
 
     }
 
-    // 2 - 4 số cuối
+
+    // ======================================================
+    // 2 - 4 SỐ CUỐI
+    // ======================================================
 
     else {
 
@@ -196,12 +317,18 @@ async function searchCustomers() {
     if (error) {
 
       console.error(
-        "Supabase error:",
+        "Supabase search error:",
         error
       );
 
       throw error;
     }
+
+
+    console.log(
+      "Kết quả:",
+      data
+    );
 
 
     renderResults(
@@ -212,14 +339,14 @@ async function searchCustomers() {
 
   catch (error) {
 
-    console.error(error);
+    console.error(
+      "Lỗi tìm kiếm:",
+      error
+    );
 
-    showEmpty(
-      "❌ Không thể truy cập database.<br><br>" +
-      escapeHTML(
-        error.message ||
-        "Lỗi không xác định"
-      )
+
+    showError(
+      error
     );
 
   }
@@ -229,17 +356,24 @@ async function searchCustomers() {
     searchButton.disabled =
       false;
 
-    searchButton.textContent =
-      "🔍 Tìm";
+    searchButton.innerHTML =
+      "🔎 TRA CỨU";
+
   }
+
 }
 
 
-// =====================================================
-// HIỂN THỊ KẾT QUẢ
-// =====================================================
+// ============================================================
+// 9. HIỂN THỊ KẾT QUẢ
+// ============================================================
 
 function renderResults(data) {
+
+  if (!resultCount) {
+    return;
+  }
+
 
   resultCount.textContent =
     `${data.length} kết quả`;
@@ -248,9 +382,23 @@ function renderResults(data) {
   if (!data.length) {
 
     results.innerHTML = `
-      <div class="empty">
-        🔍 Không tìm thấy khách hàng.
+
+      <div class="empty-state">
+
+        <div class="empty-icon">
+          😕
+        </div>
+
+        <h3>
+          Không tìm thấy khách hàng
+        </h3>
+
+        <p>
+          Không có dữ liệu phù hợp với số điện thoại này.
+        </p>
+
       </div>
+
     `;
 
     return;
@@ -258,20 +406,25 @@ function renderResults(data) {
 
 
   results.innerHTML =
-    data.map(
-      customer =>
-        createCustomerHTML(
-          customer
-        )
-    ).join("");
+    data
+      .map(
+        customer =>
+          createCustomerHTML(
+            customer
+          )
+      )
+      .join("");
+
 }
 
 
-// =====================================================
-// TẠO HTML KHÁCH HÀNG
-// =====================================================
+// ============================================================
+// 10. TẠO CARD KHÁCH HÀNG
+// ============================================================
 
-function createCustomerHTML(customer) {
+function createCustomerHTML(
+  customer
+) {
 
   const addressParts = [
 
@@ -281,11 +434,9 @@ function createCustomerHTML(customer) {
       ? `Ấp ${customer.hamlet}`
       : "",
 
-    customer.commune,
-
-    customer.district,
-
-    customer.province
+    customer.commune
+      ? customer.commune
+      : ""
 
   ].filter(Boolean);
 
@@ -301,7 +452,11 @@ function createCustomerHTML(customer) {
       data-id="${escapeHTML(customer.id)}"
     >
 
+
+      <!-- TOP -->
+
       <div class="customer-top">
+
 
         <div>
 
@@ -320,17 +475,22 @@ function createCustomerHTML(customer) {
           <div class="customer-phone">
 
             📞
-            ${escapeHTML(customer.phone)}
+            ${escapeHTML(
+              customer.phone
+            )}
 
           </div>
 
         </div>
 
 
+        <!-- BUTTON -->
+
         <div class="action-buttons">
 
           <button
             class="edit-button"
+            type="button"
             onclick="editCustomer('${customer.id}')"
           >
             ✏️ Sửa
@@ -339,6 +499,7 @@ function createCustomerHTML(customer) {
 
           <button
             class="delete-button"
+            type="button"
             onclick="deleteCustomer('${customer.id}')"
           >
             🗑️ Xóa
@@ -346,14 +507,22 @@ function createCustomerHTML(customer) {
 
         </div>
 
+
       </div>
 
 
+      <!-- THÔNG TIN -->
+
       <div class="info-grid">
+
 
         <div class="info-item">
 
-          🚚 <b>Shipper:</b><br>
+          🚚
+
+          <b>Shipper</b>
+
+          <br>
 
           ${
             escapeHTML(
@@ -367,7 +536,11 @@ function createCustomerHTML(customer) {
 
         <div class="info-item">
 
-          🔧 <b>Người chạy/lắp:</b><br>
+          🔧
+
+          <b>Người chạy/lắp</b>
+
+          <br>
 
           ${
             escapeHTML(
@@ -378,49 +551,193 @@ function createCustomerHTML(customer) {
 
         </div>
 
+
       </div>
 
 
+      <!-- ADDRESS -->
+
       ${
         address
-          ? `
-            <div class="address">
 
-              📍 <b>Địa chỉ:</b><br>
+        ?
 
-              ${escapeHTML(address)}
+        `
 
-            </div>
-          `
-          : ""
+          <div class="address">
+
+            📍
+
+            <b>Địa chỉ:</b>
+
+            <br>
+
+            ${escapeHTML(address)}
+
+          </div>
+
+        `
+
+        :
+
+        ""
+
       }
 
+
+      <!-- NOTE -->
 
       ${
         customer.note
-          ? `
-            <div class="note">
 
-              📝 <b>Ghi chú:</b><br>
+        ?
 
-              ${escapeHTML(
-                customer.note
-              )}
+        `
 
-            </div>
-          `
-          : ""
+          <div class="note">
+
+            📝
+
+            <b>Ghi chú:</b>
+
+            <br>
+
+            ${escapeHTML(
+              customer.note
+            )}
+
+          </div>
+
+        `
+
+        :
+
+        ""
+
       }
+
 
     </div>
 
   `;
+
 }
 
 
-// =====================================================
-// THÊM KHÁCH HÀNG
-// =====================================================
+// ============================================================
+// 11. LẤY GIÁ TRỊ FORM
+// ============================================================
+
+function getFormData() {
+
+  return {
+
+    phone:
+
+      cleanPhone(
+        document
+          .getElementById(
+            "phone"
+          )
+          .value
+      ),
+
+
+    customer_name:
+
+      document
+        .getElementById(
+          "customer_name"
+        )
+        .value
+        .trim(),
+
+
+    shipper_name:
+
+      document
+        .getElementById(
+          "shipper_name"
+        )
+        .value
+        .trim(),
+
+
+    installer_name:
+
+      document
+        .getElementById(
+          "installer_name"
+        )
+        .value
+        .trim(),
+
+
+    hamlet:
+
+      document
+        .getElementById(
+          "hamlet"
+        )
+        .value
+        .trim(),
+
+
+    commune:
+
+      document
+        .getElementById(
+          "commune"
+        )
+        .value
+        .trim(),
+
+
+    address:
+
+      document
+        .getElementById(
+          "address"
+        )
+        .value
+        .trim(),
+
+
+    note:
+
+      document
+        .getElementById(
+          "note"
+        )
+        .value
+        .trim()
+
+  };
+
+}
+
+
+// ============================================================
+// 12. RESET FORM
+// ============================================================
+
+function resetForm() {
+
+  customerForm.reset();
+
+
+  delete customerForm.dataset.editId;
+
+
+  saveButton.innerHTML =
+    "💾 LƯU KHÁCH HÀNG";
+
+}
+
+
+// ============================================================
+// 13. THÊM / CẬP NHẬT
+// ============================================================
 
 customerForm.addEventListener(
   "submit",
@@ -429,15 +746,13 @@ customerForm.addEventListener(
     event.preventDefault();
 
 
-    const phone =
-      cleanPhone(
-        document
-          .getElementById("phone")
-          .value
-      );
+    const formData =
+      getFormData();
 
 
-    if (!phone) {
+    // Kiểm tra SĐT
+
+    if (!formData.phone) {
 
       alert(
         "⚠️ Vui lòng nhập số điện thoại."
@@ -448,7 +763,7 @@ customerForm.addEventListener(
 
 
     if (
-      phone.length < 8
+      formData.phone.length < 8
     ) {
 
       alert(
@@ -459,223 +774,447 @@ customerForm.addEventListener(
     }
 
 
-    const customer = {
-
-      phone:
-
-        phone,
+    const editId =
+      customerForm.dataset.editId;
 
 
-      customer_name:
+    // ========================================================
+    // UPDATE
+    // ========================================================
 
-        document
-          .getElementById(
-            "customer_name"
-          )
-          .value
-          .trim(),
+    if (editId) {
 
-
-      shipper_name:
-
-        document
-          .getElementById(
-            "shipper_name"
-          )
-          .value
-          .trim(),
-
-
-      installer_name:
-
-        document
-          .getElementById(
-            "installer_name"
-          )
-          .value
-          .trim(),
-
-
-      hamlet:
-
-        document
-          .getElementById(
-            "hamlet"
-          )
-          .value
-          .trim(),
-
-
-      commune:
-
-        document
-          .getElementById(
-            "commune"
-          )
-          .value
-          .trim(),
-
-
-      district:
-
-        document
-          .getElementById(
-            "district"
-          )
-          .value
-          .trim(),
-
-
-      province:
-
-        document
-          .getElementById(
-            "province"
-          )
-          .value
-          .trim(),
-
-
-      address:
-
-        document
-          .getElementById(
-            "address"
-          )
-          .value
-          .trim(),
-
-
-      note:
-
-        document
-          .getElementById(
-            "note"
-          )
-          .value
-          .trim()
-
-    };
-
-
-    saveButton.disabled =
-      true;
-
-    saveButton.textContent =
-      "⏳ Đang lưu...";
-
-
-    try {
-
-      // Kiểm tra số điện thoại
-      // đã tồn tại chưa
-
-      const {
-        data: existing,
-        error: checkError
-      } =
-        await supabaseClient
-          .from("customers")
-          .select("id")
-          .eq(
-            "phone",
-            phone
-          )
-          .limit(1);
-
-
-      if (checkError) {
-
-        throw checkError;
-      }
-
-
-      if (
-        existing &&
-        existing.length > 0
-      ) {
-
-        alert(
-          "⚠️ Số điện thoại này đã có trong database."
-        );
-
-        return;
-      }
-
-
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("customers")
-          .insert([
-            customer
-          ]);
-
-
-      if (error) {
-
-        throw error;
-      }
-
-
-      alert(
-        "✅ Đã thêm khách hàng thành công!"
+      await updateCustomer(
+        editId,
+        formData
       );
 
-
-      customerForm.reset();
-
-
-      // Tự động tìm lại
-
-      searchInput.value =
-        phone;
-
-      await searchCustomers();
-
+      return;
     }
 
-    catch (error) {
 
-      console.error(
-        "Insert error:",
-        error
-      );
+    // ========================================================
+    // INSERT
+    // ========================================================
 
-
-      alert(
-        "❌ Không thể lưu.\n\n" +
-        (
-          error.message ||
-          "Lỗi database"
-        )
-      );
-
-    }
-
-    finally {
-
-      saveButton.disabled =
-        false;
-
-      saveButton.textContent =
-        "💾 Lưu khách hàng";
-    }
+    await addCustomer(
+      formData
+    );
 
   }
 );
 
 
-// =====================================================
-// XÓA KHÁCH HÀNG
-// =====================================================
+// ============================================================
+// 14. THÊM KHÁCH HÀNG
+// ============================================================
 
-async function deleteCustomer(id) {
+async function addCustomer(
+  customer
+) {
+
+  saveButton.disabled =
+    true;
+
+  saveButton.innerHTML =
+    "⏳ ĐANG LƯU...";
+
+
+  try {
+
+    // Kiểm tra SĐT đã có
+
+    const {
+      data: existing,
+      error: checkError
+    } =
+      await supabaseClient
+        .from("customers")
+        .select("id")
+        .eq(
+          "phone",
+          customer.phone
+        )
+        .limit(1);
+
+
+    if (checkError) {
+
+      throw checkError;
+    }
+
+
+    if (
+      existing &&
+      existing.length > 0
+    ) {
+
+      alert(
+        "⚠️ Số điện thoại này đã tồn tại!"
+      );
+
+      return;
+    }
+
+
+    // INSERT
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("customers")
+        .insert([
+          customer
+        ])
+        .select();
+
+
+    if (error) {
+
+      throw error;
+    }
+
+
+    console.log(
+      "Đã thêm:",
+      data
+    );
+
+
+    alert(
+      "✅ Đã thêm khách hàng thành công!"
+    );
+
+
+    // Reset
+
+    resetForm();
+
+
+    // Tìm lại
+
+    searchInput.value =
+      customer.phone;
+
+
+    await searchCustomers();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Insert error:",
+      error
+    );
+
+
+    showDatabaseError(
+      error
+    );
+
+  }
+
+  finally {
+
+    saveButton.disabled =
+      false;
+
+    saveButton.innerHTML =
+      "💾 LƯU KHÁCH HÀNG";
+
+  }
+
+}
+
+
+// ============================================================
+// 15. SỬA KHÁCH HÀNG
+// ============================================================
+
+async function editCustomer(
+  id
+) {
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("customers")
+        .select("*")
+        .eq(
+          "id",
+          id
+        )
+        .single();
+
+
+    if (error) {
+
+      throw error;
+    }
+
+
+    // Đưa dữ liệu vào form
+
+    document.getElementById(
+      "phone"
+    ).value =
+      data.phone || "";
+
+
+    document.getElementById(
+      "customer_name"
+    ).value =
+      data.customer_name || "";
+
+
+    document.getElementById(
+      "shipper_name"
+    ).value =
+      data.shipper_name || "";
+
+
+    document.getElementById(
+      "installer_name"
+    ).value =
+      data.installer_name || "";
+
+
+    document.getElementById(
+      "hamlet"
+    ).value =
+      data.hamlet || "";
+
+
+    document.getElementById(
+      "commune"
+    ).value =
+      data.commune || "";
+
+
+    document.getElementById(
+      "address"
+    ).value =
+      data.address || "";
+
+
+    document.getElementById(
+      "note"
+    ).value =
+      data.note || "";
+
+
+    // Lưu ID đang sửa
+
+    customerForm.dataset.editId =
+      id;
+
+
+    // Đổi nút
+
+    saveButton.innerHTML =
+      "🔄 CẬP NHẬT KHÁCH HÀNG";
+
+
+    // Cuộn xuống form
+
+    customerForm.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Edit error:",
+      error
+    );
+
+
+    showDatabaseError(
+      error
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// 16. UPDATE KHÁCH HÀNG
+// ============================================================
+
+async function updateCustomer(
+  id,
+  customer
+) {
+
+  saveButton.disabled =
+    true;
+
+  saveButton.innerHTML =
+    "⏳ ĐANG CẬP NHẬT...";
+
+
+  try {
+
+    // Kiểm tra số điện thoại
+    // có bị trùng với người khác không
+
+    const {
+      data: duplicate,
+      error: duplicateError
+    } =
+      await supabaseClient
+        .from("customers")
+        .select("id")
+        .eq(
+          "phone",
+          customer.phone
+        )
+        .neq(
+          "id",
+          id
+        )
+        .limit(1);
+
+
+    if (duplicateError) {
+
+      throw duplicateError;
+    }
+
+
+    if (
+      duplicate &&
+      duplicate.length > 0
+    ) {
+
+      alert(
+        "⚠️ Số điện thoại này đã thuộc khách hàng khác."
+      );
+
+      return;
+    }
+
+
+    // UPDATE
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("customers")
+        .update({
+
+          phone:
+            customer.phone,
+
+          customer_name:
+            customer.customer_name,
+
+          shipper_name:
+            customer.shipper_name,
+
+          installer_name:
+            customer.installer_name,
+
+          hamlet:
+            customer.hamlet,
+
+          commune:
+            customer.commune,
+
+          address:
+            customer.address,
+
+          note:
+            customer.note,
+
+          updated_at:
+            new Date().toISOString()
+
+        })
+        .eq(
+          "id",
+          id
+        );
+
+
+    if (error) {
+
+      throw error;
+    }
+
+
+    alert(
+      "✅ Đã cập nhật khách hàng!"
+    );
+
+
+    // Reset
+
+    resetForm();
+
+
+    // Tìm lại
+
+    searchInput.value =
+      customer.phone;
+
+
+    await searchCustomers();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Update error:",
+      error
+    );
+
+
+    showDatabaseError(
+      error
+    );
+
+  }
+
+  finally {
+
+    saveButton.disabled =
+      false;
+
+    saveButton.innerHTML =
+      "💾 LƯU KHÁCH HÀNG";
+
+  }
+
+}
+
+
+// ============================================================
+// 17. XÓA KHÁCH HÀNG
+// ============================================================
+
+async function deleteCustomer(
+  id
+) {
 
   const confirmed =
     confirm(
-      "Bạn có chắc muốn xóa khách hàng này?"
+      "⚠️ Bạn có chắc muốn xóa khách hàng này?\n\n" +
+      "Dữ liệu sẽ bị xóa khỏi database."
     );
 
 
@@ -716,343 +1255,232 @@ async function deleteCustomer(id) {
 
   catch (error) {
 
-    console.error(error);
-
-
-    alert(
-      "❌ Không thể xóa.\n\n" +
-      (
-        error.message ||
-        "Lỗi database"
-      )
-    );
-  }
-}
-
-
-// =====================================================
-// SỬA KHÁCH HÀNG
-// =====================================================
-
-async function editCustomer(id) {
-
-  try {
-
-    const {
-      data,
+    console.error(
+      "Delete error:",
       error
-    } =
-      await supabaseClient
-        .from("customers")
-        .select("*")
-        .eq(
-          "id",
-          id
-        )
-        .single();
-
-
-    if (error) {
-
-      throw error;
-    }
-
-
-    document.getElementById(
-      "phone"
-    ).value =
-      data.phone || "";
-
-
-    document.getElementById(
-      "customer_name"
-    ).value =
-      data.customer_name || "";
-
-
-    document.getElementById(
-      "shipper_name"
-    ).value =
-      data.shipper_name || "";
-
-
-    document.getElementById(
-      "installer_name"
-    ).value =
-      data.installer_name || "";
-
-
-    document.getElementById(
-      "hamlet"
-    ).value =
-      data.hamlet || "";
-
-
-    document.getElementById(
-      "commune"
-    ).value =
-      data.commune || "";
-
-
-    document.getElementById(
-      "district"
-    ).value =
-      data.district || "";
-
-
-    document.getElementById(
-      "province"
-    ).value =
-      data.province || "";
-
-
-    document.getElementById(
-      "address"
-    ).value =
-      data.address || "";
-
-
-    document.getElementById(
-      "note"
-    ).value =
-      data.note || "";
-
-
-    saveButton.textContent =
-      "🔄 Cập nhật khách hàng";
-
-
-    // Đổi chức năng submit
-    // sang update
-
-    customerForm.dataset.editId =
-      id;
-
-
-    customerForm.scrollIntoView({
-      behavior: "smooth"
-    });
-
-  }
-
-  catch (error) {
-
-    console.error(error);
-
-    alert(
-      "❌ Không thể lấy thông tin khách hàng."
     );
+
+
+    showDatabaseError(
+      error
+    );
+
   }
+
 }
 
 
-// =====================================================
-// XỬ LÝ UPDATE
-// =====================================================
+// ============================================================
+// 18. XÓA Ô TÌM KIẾM
+// ============================================================
 
-customerForm.addEventListener(
-  "submit",
-  async function(event) {
+if (clearSearch) {
 
-    const editId =
-      customerForm.dataset.editId;
+  clearSearch.addEventListener(
+    "click",
+    function() {
 
+      searchInput.value = "";
 
-    if (!editId) {
-
-      return;
-    }
+      resultCount.textContent =
+        "0 kết quả";
 
 
-    event.preventDefault();
+      results.innerHTML = `
+
+        <div class="empty-state">
+
+          <div class="empty-icon">
+            🔍
+          </div>
+
+          <h3>
+            Chưa có kết quả
+          </h3>
+
+          <p>
+            Nhập số điện thoại phía trên
+            để bắt đầu tra cứu.
+          </p>
+
+        </div>
+
+      `;
 
 
-    const phone =
-      cleanPhone(
-        document
-          .getElementById("phone")
-          .value
-      );
-
-
-    const updatedCustomer = {
-
-      phone,
-
-      customer_name:
-        document
-          .getElementById(
-            "customer_name"
-          )
-          .value
-          .trim(),
-
-      shipper_name:
-        document
-          .getElementById(
-            "shipper_name"
-          )
-          .value
-          .trim(),
-
-      installer_name:
-        document
-          .getElementById(
-            "installer_name"
-          )
-          .value
-          .trim(),
-
-      hamlet:
-        document
-          .getElementById(
-            "hamlet"
-          )
-          .value
-          .trim(),
-
-      commune:
-        document
-          .getElementById(
-            "commune"
-          )
-          .value
-          .trim(),
-
-      district:
-        document
-          .getElementById(
-            "district"
-          )
-          .value
-          .trim(),
-
-      province:
-        document
-          .getElementById(
-            "province"
-          )
-          .value
-          .trim(),
-
-      address:
-        document
-          .getElementById(
-            "address"
-          )
-          .value
-          .trim(),
-
-      note:
-        document
-          .getElementById(
-            "note"
-          )
-          .value
-          .trim(),
-
-      updated_at:
-        new Date().toISOString()
-
-    };
-
-
-    try {
-
-      saveButton.disabled =
-        true;
-
-      saveButton.textContent =
-        "⏳ Đang cập nhật...";
-
-
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("customers")
-          .update(
-            updatedCustomer
-          )
-          .eq(
-            "id",
-            editId
-          );
-
-
-      if (error) {
-
-        throw error;
-      }
-
-
-      alert(
-        "✅ Đã cập nhật."
-      );
-
-
-      customerForm.reset();
-
-      delete customerForm.dataset.editId;
-
-
-      saveButton.textContent =
-        "💾 Lưu khách hàng";
-
-
-      if (phone) {
-
-        searchInput.value =
-          phone;
-
-        await searchCustomers();
-      }
+      searchInput.focus();
 
     }
+  );
 
-    catch (error) {
+}
 
-      console.error(error);
 
-      alert(
-        "❌ Không thể cập nhật.\n\n" +
-        (
-          error.message ||
-          "Lỗi database"
-        )
-      );
+// ============================================================
+// 19. CLICK NÚT TÌM
+// ============================================================
 
-    }
+if (searchButton) {
 
-    finally {
+  searchButton.addEventListener(
+    "click",
+    searchCustomers
+  );
 
-      saveButton.disabled =
-        false;
+}
+
+
+// ============================================================
+// 20. ENTER ĐỂ TÌM
+// ============================================================
+
+if (searchInput) {
+
+  searchInput.addEventListener(
+    "keydown",
+    function(event) {
 
       if (
-        !customerForm.dataset.editId
+        event.key === "Enter"
       ) {
 
-        saveButton.textContent =
-          "💾 Lưu khách hàng";
+        event.preventDefault();
+
+        searchCustomers();
+
       }
+
     }
+  );
 
+}
+
+
+// ============================================================
+// 21. CHỈ CHO NHẬP SỐ ĐIỆN THOẠI
+// ============================================================
+
+const phoneInput =
+  document.getElementById(
+    "phone"
+  );
+
+
+if (phoneInput) {
+
+  phoneInput.addEventListener(
+    "input",
+    function() {
+
+      this.value =
+        cleanPhone(
+          this.value
+        );
+
+    }
+  );
+
+}
+
+
+if (searchInput) {
+
+  searchInput.addEventListener(
+    "input",
+    function() {
+
+      this.value =
+        cleanPhone(
+          this.value
+        );
+
+    }
+  );
+
+}
+
+
+// ============================================================
+// 22. HIỂN THỊ LỖI DATABASE
+// ============================================================
+
+function showDatabaseError(
+  error
+) {
+
+  let message =
+    error?.message ||
+    "Lỗi không xác định";
+
+
+  // RLS
+
+  if (
+    message
+      .toLowerCase()
+      .includes(
+        "row-level security"
+      )
+  ) {
+
+    message =
+      "Database đang chặn quyền truy cập (RLS).\n\n" +
+      "Bạn cần tạo Policy trong Supabase.";
   }
-);
 
 
-// =====================================================
-// EMPTY
-// =====================================================
+  // Permission
 
-function showEmpty(message) {
+  else if (
+    message
+      .toLowerCase()
+      .includes(
+        "permission"
+      )
+  ) {
+
+    message =
+      "Database không cho phép thao tác này.\n\n" +
+      "Kiểm tra RLS/Policy trong Supabase.";
+  }
+
+
+  alert(
+    "❌ LỖI DATABASE\n\n" +
+    message
+  );
+
+}
+
+
+// ============================================================
+// 23. HIỂN THỊ LỖI TÌM KIẾM
+// ============================================================
+
+function showError(
+  error
+) {
+
+  const message =
+    error?.message ||
+    "Không thể kết nối database.";
+
 
   results.innerHTML = `
 
-    <div class="empty">
+    <div class="empty-state">
 
-      ${message}
+      <div class="empty-icon">
+        ⚠️
+      </div>
+
+      <h3>
+        Có lỗi xảy ra
+      </h3>
+
+      <p>
+        ${escapeHTML(message)}
+      </p>
 
     </div>
 
@@ -1060,35 +1488,16 @@ function showEmpty(message) {
 
 
   resultCount.textContent =
-    "0 kết quả";
+    "Lỗi";
+
 }
 
 
-// =====================================================
-// ENTER ĐỂ TÌM
-// =====================================================
+// ============================================================
+// 24. TEST DATABASE
+// ============================================================
 
-searchInput.addEventListener(
-  "keydown",
-  function(event) {
-
-    if (
-      event.key === "Enter"
-    ) {
-
-      searchCustomers();
-
-    }
-
-  }
-);
-
-
-// =====================================================
-// KIỂM TRA KẾT NỐI
-// =====================================================
-
-async function testConnection() {
+async function testDatabase() {
 
   try {
 
@@ -1104,7 +1513,7 @@ async function testConnection() {
     if (error) {
 
       console.error(
-        "❌ Database error:",
+        "❌ Database test:",
         error
       );
 
@@ -1113,8 +1522,9 @@ async function testConnection() {
 
 
     console.log(
-      "✅ Kết nối database thành công!"
+      "✅ JT Shipper: Database hoạt động!"
     );
+
 
     return true;
 
@@ -1123,15 +1533,28 @@ async function testConnection() {
   catch (error) {
 
     console.error(
-      "❌ Connection error:",
+      "❌ Database connection:",
       error
     );
 
     return false;
+
   }
+
 }
 
 
-// Chạy kiểm tra
+// ============================================================
+// 25. CHẠY TEST KHI TRANG MỞ
+// ============================================================
 
-testConnection();
+testDatabase();
+
+
+// ============================================================
+// END
+// ============================================================
+
+console.log(
+  "🚚 JT SHIPPER APP READY"
+);
